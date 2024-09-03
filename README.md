@@ -1,7 +1,7 @@
-##Aim and Objectives 
+## Aim and Objectives 
 - To analyze the factors affecting house rent in various cities across India, focusing on the preferences of different tenant types (bachelors and families) for houses
 
-##Objectives:
+## Objectives:
 1. Data Preparation: Clean and preprocess the dataset by removing outliers, handling missing values, and converting data types
 2. Exploratory Analysis: Explore key factors affecting house rents, such as city, tenant preferences, and house features like BHK, bathrooms, and furnishing status
 3. Tenant Preference Analysis: Identify room features preferred by bachelors and families for houses with rent up to ₹50,000
