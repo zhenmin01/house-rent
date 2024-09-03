@@ -1,0 +1,799 @@
+# Tan Zhen Min
+# TP071429
+
+
+import.packages("dplyr")
+import.packages("ggplot2")
+import.packages("plotrix")
+import.packages("webr")
+import.packages("tidyverse")
+import.packages("psych")
+
+library(dplyr)
+library(ggplot2)
+library(plotrix)
+library(webr)
+library(tidyverse)
+library(psych)
+
+# Import Data 
+data = read.csv("D:\\APU\\SEM 1\\PDFA\\House_Rent_Dataset.csv",header=TRUE)
+View(data)
+
+# Data Exploration 
+# Understanding the data
+str(data) # See the overall structure
+
+names(data) # view only heading/title
+
+ncol(data) # no. of column
+
+nrow(data) # no. of rows
+
+summary(data) # all detail abt the data
+
+class(data) # how data stored
+
+length(data) # no. of column
+
+
+# Viewing the data
+head(data) # For viewing first 6 lines of data
+
+head(data,n=10) # For viewing first 10 lines of data
+
+tail(data) # For viewing last  6 lines of data
+
+tail(data,n=10) # For viewing last  10 lines of data
+
+
+# Select random rows from a dataset 
+sample_n(data, 5)
+
+# Select % random rows
+sample_frac(data, 0.1)
+
+
+# Data Pre processing
+# Data Cleaning
+# Remove Area Locality Row which is invalid   
+subset(data,as.integer(Area.Locality)>0)
+data=data[-c(442,3565),]
+
+# Remove outliers of Rent
+summary(data$Rent)
+ggplot(data,aes(x=as.factor(City),y=Rent))+geom_boxplot()
+data=data[data$Rent<750000,]
+ggplot(data,aes(x=as.factor(City),y=Rent))+geom_boxplot()
+summary(data$Rent)
+
+# Remove outliers of Area Type
+unique(data$Area.Type)
+super_count=nrow(data[data$Area.Type=="Super Area",])
+super_count
+carpet_count=nrow(data[data$Area.Type=="Carpet Area",])
+carpet_count
+built_count=nrow(data[data$Area.Type=="Built Area",])
+built_count
+data=data[(data$Area.Type=="Super Area")|(data$Area.Type=="Carpet Area"),]
+
+
+# Remove outliers of Point.Of.Contact
+unique(data$Point.of.Contact)
+ownercount=nrow(data[data$Point.of.Contact=="Contact Owner",])
+ownercount
+buildercount=nrow(data[data$Point.of.Contact=="Contact Builder",])
+buildercount
+agentcount=nrow(data[data$Point.of.Contact=="Contact Agent",])
+agentcount
+data=data[(data$Point.of.Contact=="Contact Owner")|(data$Point.of.Contact=="Contact Agent"),]
+unique(data$Point.of.Contact)
+
+# Remove any possible NA rows 
+colSums(is.na(data))
+
+
+#Data Manipulation, Data Transformation
+# Posted.on datatype change to date type
+data$Posted.On=as.Date(data$Posted.On,"%m/%d/%y")
+class(data$Posted.On)
+
+# Data Mutation by adding a new column for date
+data=mutate(data,Months_Post=format(data$Posted.On,"%m"))
+data$Months_Post=ifelse(data$Months_Post=="01","Jan",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="02","Feb",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="03","Mar",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="04","Apr",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="05","May",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="06","Jun",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="07","Jul",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="08","Aug",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="09","Sep",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="10","Oct",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="11","Nov",data$Months_Post)
+data$Months_Post=ifelse(data$Months_Post=="12","Dec",data$Months_Post)
+
+
+
+# Data Mutation by adding a Size Range 
+data = mutate(data,Size_Range=Size)
+data$Size_Range=ifelse(((data$Size>=0)&(data$Size<=1000)),"0-1000",data$Size_Range)
+data$Size_Range=ifelse(((data$Size>=1001)&(data$Size<=2000)),"1001-2000",data$Size_Range)
+data$Size_Range=ifelse(((data$Size>=2001)&(data$Size<=3000)),"2001-3000",data$Size_Range)
+data$Size_Range=ifelse(((data$Size>=3001)&(data$Size<=4000)),"3001-4000",data$Size_Range)
+data$Size_Range=ifelse(((data$Size>=4001)&(data$Size<=5000)),"4001-5000",data$Size_Range)
+data$Size_Range=ifelse(((data$Size>=5001)&(data$Size<=6000)),"5001-6000",data$Size_Range)
+data$Size_Range=ifelse(((data$Size>=6001)&(data$Size<=7000)),"6001-7000",data$Size_Range)
+data$Size_Range=ifelse(((data$Size>=7001)&(data$Size<=8000)),"7001-8000",data$Size_Range)
+
+
+# Data Mutation by adding a Rent Range
+data=mutate(data,Rent_Range=Rent)
+data$Rent_Range=ifelse(((data$Rent>=0)&(data$Size<=10000)),"0-10000",data$Rent_Range)
+data$Rent_Range=ifelse(((data$Rent>=10001)&(data$Size<=25000)),"10001-25000",data$Rent_Range)
+data$Rent_Range=ifelse(((data$Rent>=25001)&(data$Size<=50000)),"25001-50000",data$Rent_Range)
+data$Rent_Range=ifelse(((data$Rent>=50001)&(data$Size<=1000000)),"50001-1000000",data$Rent_Range)
+View(data)
+ 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Data Visualization 
+# Question 1
+# What type of room details that bachelor prefers the most? Why?
+# Analysis 1.1 - Find the details of the total bachelor's available houses 
+als1.1a=nrow(data[data$Tenant.Preferred=="Bachelors",])
+als1.1a
+
+als1.1b=nrow(data[data$Tenant.Preferred=="Family",])
+als1.1b
+
+als1.1c=nrow(data[data$Tenant.Preferred=="Bachelors/Family",])
+als1.1c
+
+# Pie Chart 1
+pdata =c(als1.1a,als1.1b,als1.1c)
+labels =c("Bachelors","Family","Bachelors/Family")
+
+piepercent=round(100*pdata/sum(pdata),1)
+
+pie(pdata,labels=piepercent,main="Room Tenant Preferred ",col=rainbow(length(pdata)))
+legend("topleft",c(labels),cex = 0.5,fill=rainbow(length(pdata)))
+
+
+# Analysis 1.2 - Find the relationship between rent and bachelor's preferred house 
+BachelorObv=(data[(data$Tenant.Preferred=="Bachelors"),])
+rent_range_data=BachelorObv%>%
+  group_by(Rent_Range)%>%
+  summarize(Count=length(Rent_Range))
+rent_range_data
+
+# Barplot
+barplot=ggplot(rent_range_data, aes(x=Rent_Range,y=Count)) + geom_bar(stat="identity",width=0.5,color="blue",fill="yellow") + geom_text(aes(label=Count))
+print(barplot+ggtitle("Rent Range which Bachelor Preferred"))
+
+# Analysis 1.3 - Find the relationship between rent<=50000 and bachelor's preferred house 
+RentBachelor=(BachelorObv[(BachelorObv$Rent<=50000),])
+options(scipen=999)
+format(RentBachelor,scientific=FALSE)
+hist1=ggplot(RentBachelor,aes(x=Rent)) + geom_histogram(color="orange",aes(fill=..count..))+
+  scale_fill_gradient("Count",low="green",high="red") +ggtitle("Bachelor Rent Preffered")+
+  geom_vline(aes(xintercept=mean(Rent)),color="blue",size=0.5)+labs(y="Frequency",x="Rent")
+hist1
+
+
+
+# Analysis 1.4 - Find the relationship between rent<=50000 and only 1 bathroom is required and bachelor's preferred house
+
+als1.4a=nrow(RentBachelor[(RentBachelor$Bathroom==1),])
+als1.4a
+
+# Find the relationship between rent<=50000 and 2 bathroom is required and bachelor's preferred house
+
+als1.4b=nrow(RentBachelor[(RentBachelor$Bathroom==2),])
+als1.4b
+
+# Pie Chart 
+pdata =c(als1.4a,als1.4b)
+labels =c("1 Bathroom","2 Bathroom")
+piepercent=round(100*pdata/sum(pdata),1)
+pie3D(pdata,labels=piepercent,radius=1,main="Pie Chart of Rent<=500000 Bachelor Preffered & Bathroom Count ",col=c("pink","yellow"))
+legend("topright",c(labels),cex=0.5,fill=c("pink","yellow"))
+
+
+# Analysis 1.5 - Find the relationship between rent<=50000 and Size and bachelor's preferred house 
+  
+als1.5=RentBachelor
+ggplot(als1.5,aes(x=Size,y=Rent)) + geom_point(shape=20) + geom_smooth(method = "lm") 
+
+
+#Analysis 1.6 - Find the analysis between rent<=50000 and Bedroom Count and Bathroom Count which bachelor's preferred house 
+als1.6a=nrow(RentBachelor[(RentBachelor$BHK==1)&(RentBachelor$Bathroom==1),])
+als1.6a
+
+als1.6b=nrow(RentBachelor[(RentBachelor$BHK==1)&(RentBachelor$Bathroom==2),])
+als1.6b
+
+als1.6c=nrow(RentBachelor[(RentBachelor$BHK==2)&(RentBachelor$Bathroom==1),])
+als1.6c
+
+als1.6d=nrow(RentBachelor[(RentBachelor$BHK==2)&(RentBachelor$Bathroom==2),])
+als1.6d
+
+# Bar Chart
+badata= data.frame(variable=c("1BHK&1Bath","1BHK&2Bath","2BHK&1Bath","2BHK&2Bath"),
+                   value=c(als1.6a,als1.6b,als1.6c,als1.6d))
+
+# Bar Plot 
+barplot=ggplot(badata, aes(x=variable,y=value)) + 
+  geom_bar(stat="identity",width=0.5,fill=c(rainbow(4)),color="black") + 
+  geom_text(aes(label=value))
+print(barplot+ggtitle("Analysis of rent<=50000 which bachelor preferred and Bedroom Count and Bathroom Count"))
+
+
+# Analysis 1.7 - Find the analysis between rent<=50000 and Area = Carpet and bachelor's preferred house
+als1.7=RentBachelor
+boxplot=ggplot(als7.7,aes(x=Area.Type,y=Rent,color=Area.Type))+ggtitle("Analysis Between Area Type and Rent which rent<=50000 which Bachelor's Preffered")+labs(x="Area Type",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+
+                     theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "red")
+
+
+# Analysis 1.8 - Find the analysis between rent<=50000 and City preferred and bachelor's preferred house
+als1.8=RentBachelor
+boxplot=ggplot(als7.7,aes(x=City,y=Rent,color=City))+ggtitle("Analysis Between City and Rent which rent<=50000 which Bachelor's Preffered")+labs(x="City",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+
+                     theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "red")
+
+  
+# Analysis 1.9 - Find the analysis between rent<=50000 and floor preferred and bachelor's preferred house
+# Ground Floor
+string_Ground = "Ground"
+als1.9a=nrow(RentBachelor[(grepl(string_Ground,data$Floor)),])
+als1.9a
+
+
+# All Floors(except GF)
+als1.9b=nrow(RentBachelor[!(grepl(string_Ground,data$Floor)),])
+als1.9b
+
+# Pie Chart 
+pdata=c(als1.9a,als1.9b)
+labels =c("Ground Floor","Upper Floor")
+piepercent=round(100*pdata/sum(pdata),1)
+pie(pdata,labels=piepercent,radius=1,main="Ground vs Upper Floor which bachelor preferred",col=c("green","blue"),clockwise=TRUE)
+legend("topleft",c(labels),cex=0.5,fill=c("green","blue"))
+
+
+# Analysis 1.10 - Find the relationship between rent<=50000 rows average according to furnishing status and bachelor's preferred house  
+
+rentfurnish_average=RentBachelor%>%
+  group_by(Furnishing.Status)%>%
+  summarize(Avg_rent=mean(Rent))
+rentfurnish_average
+
+ggplot(rentfurnish_average,aes(x=Furnishing.Status,y=Avg_rent,color=Avg_rent))+geom_point(size=5)+
+  geom_segment(aes(x=Furnishing.Status,xend=Furnishing.Status,y=0,yend=Avg_rent),linewidth=2)+
+  labs(title="Relationship between rent<=50000 rows average according to furnishing status which bachelor preferred",x="Furnishing Status",y="Rent<=50000 Rows Average")
+
+
+# Analysis 1.11 -  Find the relationship between rent<=50000 and point of contact and bachelor's preferred house
+als1.11a =nrow(RentBachelor[(RentBachelor$Point.of.Contact=="Contact Owner"),])
+als1.11a
+
+als1.11b =nrow(RentBachelor[(RentBachelor$Point.of.Contact=="Contact Tenant"),])
+als1.11b
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# Question 2
+# What type of room details does that family prefer the most for Rent<=50000? Why? 
+
+# Analysis 2.1 - Find the details of the total family's available houses 
+FamilyObv=(data[(data$Tenant.Preferred=="Family"),])
+Frent_range_data=FamilyObv%>%
+  group_by(Rent_Range)%>%
+  summarize(Count=length(Rent_Range))
+Frent_range_data
+
+# Barplot
+barplot=ggplot(Frent_range_data, aes(x=Rent_Range,y=Count)) + geom_bar(stat="identity",width=0.5,color="blue",fill="yellow") + geom_text(aes(label=Count))
+print(barplot+ggtitle("Rent Range which Family Preferred"))
+
+
+# Analysis 2.2 - Find the relationship between rent<=50000 and family's preferred house
+RentFamily=(FamilyObv[(FamilyObv$Rent<=50000),])
+options(scipen=999)
+format(RentFamily,scientific=FALSE)
+hist2=ggplot(RentFamily,aes(x=Rent)) + geom_histogram(color="orange",aes(fill=..count..))+
+  scale_fill_gradient("Count",low="green",high="red") +ggtitle("Family Rent Preferred")+
+  geom_vline(aes(xintercept=mean(Rent)),color="blue",size=0.5)+labs(y="Frequency",x="Rent")
+hist2
+
+
+# Analysis 2.3 - Find the analysis of rent<=50000 's rows average and furnishing status and family's preferred house
+Frentfurnish_average=RentFamily%>%
+  group_by(Furnishing.Status)%>%
+  summarize(Avg_rent=mean(Rent))
+Frentfurnish_average
+
+ggplot(Frentfurnish_average,aes(x=Furnishing.Status,y=Avg_rent,color=Avg_rent))+geom_point(size=5)+
+  geom_segment(aes(x=Furnishing.Status,xend=Furnishing.Status,y=0,yend=Avg_rent),linewidth=2)+
+  labs(title="Relationship between rent<=50000 rows average according to furnishing status which family preffered",x="Furnishing Status",y="Rent<=50000 Rows Average")+theme_bw()
+
+
+# Analysis 2.4 - Find the analysis of rent<=50000 rows and furnishing status count and family's preferred house
+als2.4a=nrow(RentFamily[(RentFamily$Furnishing.Status=="Furnished"),])
+als2.4a
+
+als2.4b=nrow(RentFamily[(RentFamily$Furnishing.Status=="Semi-Furnished"),])
+als2.4b
+
+als2.4c=nrow(RentFamily[(RentFamily$Furnishing.Status=="Unfurnished"),])
+als2.4c
+
+# Bar Chart 
+badata= data.frame(furnishing_status=c("Furnished","Semi-Furnished","Unfurnished"),related_room_count=c(als2.4a,als2.4b,als2.4c))
+# Bar Plot 
+barplot=ggplot(badata, aes(x=furnishing_status,y=related_room_count)) + geom_bar(stat="identity",width=0.5,color="white",fill=rainbow(3)) + geom_text(aes(label=related_room_count))
+print(barplot+ggtitle("Analysis of rent<=50000 rows average and furnishing status count and family's preferred house"))
+
+
+# Analysis 2.5 -  Find the analysis of 2 bathroom and rent<=50000 and family preferred house
+als2.5=(RentFamily[(RentFamily$Bathroom==2),])
+
+options(scipen=999)
+  format(als2.5$Rent,scientific=FALSE)
+ggplot(als2.5,aes(x=Rent)) + geom_histogram(color="orange",aes(fill=..count..))+
+  scale_fill_gradient("Count",low="red",high="green") + ggtitle("Analysis of Family preffered and 2 bathroom count")+
+  geom_vline(aes(xintercept=mean(Rent)),color="blue",size=0.5)+labs(y="Frequency",x="Rent")
+
+
+
+# Analysis 2.6 -  Find the analysis of rent<=50000 and with 1 bathroom and family preferred house
+als2.6=(RentFamily[(RentFamily$Bathroom==1),])
+options(scipen=999)
+format(als2.6$Rent,scientific=FALSE)
+ggplot(als2.6,aes(x=Rent)) + geom_histogram(color="black",aes(fill=..count..))+
+  scale_fill_gradient("Count",low="darkmagenta",high="darkviolet") + ggtitle("Analysis of Family preffered and 1 bathroom count")+
+  geom_vline(aes(xintercept=mean(Rent)),color="red",size=0.5)+labs(y="Frequency",x="Rent")
+
+
+# Analysis 2.7 -  Find the analysis of rent<=50000 and with all bathroom count and family preferred house
+als2.7 = RentFamily
+
+ggplot(als2.7, aes(x=Rent, y=Bathroom)) + geom_point(aes(shape= factor(Bathroom),colour=factor(Bathroom))) + xlim(0,100000) + ggtitle("Rent and Bathroom Count which Family preferred")
+
+
+# Analysis 2.8 - Find the analysis of rent<=50000 and the need to contact owner/contact agent and family preferred house
+als2.8=RentFamily
+
+ggplot(als2.8,aes(x=Point.of.Contact,y=Rent,fill=Point.of.Contact))+geom_violin()
+
+
+# Analysis 2.9 - Find the relationship between rent<=50000 and size and family preferred house
+als2.9=RentFamily
+ggplot(als2.9,aes(x=Size,y=Rent)) + geom_point(shape=20) + geom_smooth(method = "lm") 
+
+
+# Analysis 2.10 - Find the relationship between rent<=50000 and city and family preferred house
+
+als2.10=RentFamily
+PD=als2.10
+PieDonut(PD,aes(City),
+         r0=0.6
+)
+
+
+# Analysis 2.11 - Find the relationship between city and furnishing status with rent<=50000 and family preferred house
+als2.11a=nrow(RentFamily[(RentFamily$City=="Kolkata") & (RentFamily$Furnishing.Status=="Furnished"),])
+als2.11a
+
+als2.11b=nrow(RentFamily[(RentFamily$City=="Mumbai") & (RentFamily$Furnishing.Status=="Furnished"),])
+als2.11b
+
+als2.11c=nrow(RentFamily[(RentFamily$City=="Bangalore") & (RentFamily$Furnishing.Status=="Furnished"),])
+als2.11c
+
+als2.11d=nrow(RentFamily[(RentFamily$City=="Delhi") & (RentFamily$Furnishing.Status=="Furnished"),])
+als2.11d
+
+als2.11e=nrow(RentFamily[(RentFamily$City=="Chennai") & (RentFamily$Furnishing.Status=="Furnished"),])
+als2.11e
+
+als2.11f=nrow(RentFamily[(RentFamily$City=="Hyderabad") & (RentFamily$Furnishing.Status=="Furnished"),])
+als2.11f
+
+als2.11g=nrow(RentFamily[(RentFamily$City=="Kolkata") & (RentFamily$Furnishing.Status=="Semi-Furnished"),])
+als2.11g
+
+als2.11h=nrow(RentFamily[(RentFamily$City=="Mumbai") & (RentFamily$Furnishing.Status=="Semi-Furnished"),])
+als2.11h
+
+als2.11i=nrow(RentFamily[(RentFamily$City=="Bangalore") & (RentFamily$Furnishing.Status=="Semi-Furnished"),])
+als2.11i
+
+als2.11j=nrow(RentFamily[(RentFamily$City=="Delhi") & (RentFamily$Furnishing.Status=="Semi-Furnished"),])
+als2.11j
+
+als2.11k=nrow(RentFamily[(RentFamily$City=="Chennai") & (RentFamily$Furnishing.Status=="Semi-Furnished"),])
+als2.11k
+
+als2.11l=nrow(RentFamily[(RentFamily$City=="Hyderabad") & (RentFamily$Furnishing.Status=="Semi-Furnished"),])
+als2.11l
+
+als2.11m=nrow(RentFamily[(RentFamily$City=="Kolkata") & (RentFamily$Furnishing.Status=="Unfurnished"),])
+als2.11m
+
+als2.11n=nrow(RentFamily[(RentFamily$City=="Mumbai") & (RentFamily$Furnishing.Status=="Unfurnished"),])
+als2.11n
+
+als2.11o=nrow(RentFamily[(RentFamily$City=="Bangalore") & (RentFamily$Furnishing.Status=="Unfurnished"),])
+als2.11o
+
+als2.11p=nrow(RentFamily[(RentFamily$City=="Delhi") & (RentFamily$Furnishing.Status=="Unfurnished"),])
+als2.11p
+
+als2.11q=nrow(RentFamily[(RentFamily$City=="Chennai") & (RentFamily$Furnishing.Status=="Unfurnished"),])
+als2.11q
+
+als2.11r=nrow(RentFamily[(RentFamily$City=="Hyderabad") & (RentFamily$Furnishing.Status=="Unfurnished"),])
+als2.11r
+ 
+# Line Chart 
+furnishedline1=c(als2.11a,als2.11b,als2.11c,als2.11d,als2.11e,als2.11f)
+semifurnishedline2=c(als2.11g,als2.11h,als2.11i,als2.11j,als2.11k,als2.11l)
+unfurnishedline3=c(als2.11m,als2.11n,als2.11o,als2.11p,als2.11q,als2.11r)
+plot(furnishedline1,type="o",col="red",ylab="Furnishing Status",xlab="City Types",main="Family in city on furnishing status",ylim=c(1,100))
+lines(semifurnishedline2,type="o",col="blue")
+points(unfurnishedline3,type="o",col="green")
+axis(1,at=1:6,labels=c("Kolkata","Mumbai","Bangalore","Delhi","Chennai","Hyderabad"))
+legend(4,100,legend=c("Furnished","Semi-Furnished","Unfurnished"),fill=c("red","blue","green"),cex=0.5)
+
+# Analysis 2.12 - Find the relationship between rent<=50000 in each city and family preferred
+als2.12=RentFamily
+ggplot(als2.12,aes(x=City,y=Rent,fill=City))+geom_violin()+coord_flip()+stat_summary(fun.y="mean", geom="point", size=1, color="red")
+
+
+# Analysis 2.13 - Find the relationship between family preferred house with rent<=50000 and overall size chosen
+
+hist3=ggplot(RentFamily,aes(x=Size)) + geom_histogram(color="black",aes(fill=..count..))+
+  scale_fill_gradient("Count",low="aquamarine3",high="aquamarine") +ggtitle("Family preferred with rent<=50000 overall size chosen")+
+  geom_vline(aes(xintercept=mean(Size)),color="blue",size=0.5)+labs(y="Frequency",x="Size")
+hist3
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# Question 3 - Find the analysis for the overall data which rent<=5000
+# Analysis 3.1 - Find the relationship between Rent Range and count which rent<=5000
+
+AllObv=(data[(data$Rent<=50000),])
+Arent_range_data=AllObv%>%
+  group_by(Rent_Range)%>%
+  summarize(Count=length(Rent_Range))
+Arent_range_data
+
+# Barplot
+barplot=ggplot(Arent_range_data, aes(x=Rent_Range,y=Count)) + geom_bar(stat="identity",width=0.5,color="black",fill=c(rainbow(3))) + geom_text(aes(label=Count))
+print(barplot+ggtitle("Rent Range Count"))
+
+
+# Analysis 3.2 - Find the relationship between Size and count which rent<=5000
+Asize_range_data=AllObv%>%
+  group_by(Size_Range)%>%
+  summarize(Count=length(Size_Range))
+Asize_range_data
+
+# Barplot
+barplot=ggplot(Asize_range_data, aes(x=Size_Range,y=Count)) + geom_bar(stat="identity",width=0.5,color="blue",fill=c(rainbow(5))) + geom_text(aes(label=Count))
+print(barplot+ggtitle("Size Range Count"))
+
+
+
+# Analysis 3.3 - Find the analysis of room size preferred frequency which rent<=50000
+ggplot(data,aes(x=Size)) + geom_histogram(color="white",aes(fill=..count..))+
+  scale_fill_gradient("Count",low="darkblue",high="blue") +ggtitle("Room Size Preffered")+
+  geom_vline(aes(xintercept=mean(Size)),color="red",size=0.5)+labs(y="Frequency",x="Size")
+
+# Analysis 3.4 - Find the count of area type of the room which rent<=50000 
+als3.4 =AllObv
+ggplot(als3.4,aes(x=factor(Area.Type),fill=factor(Area.Type))) + ggtitle("Area Type for all the room for rent<=50000")+geom_bar(width=0.5)
+
+# Analysis 3.5 - Furnished vs Unfurnished vs Semi-furnished which rent<=50000
+als3.5a= nrow(AllObv[AllObv$Furnishing.Status=="Furnished",])
+als3.5a
+als3.5b= nrow(AllObv[AllObv$Furnishing.Status=="Semi-Furnished",])
+als3.5b
+als3.5c= nrow(AllObv[AllObv$Furnishing.Status=="Unfurnished",])
+als3.5c
+
+pdata =c(als3.5a,als3.5b,als3.5c)
+badata= data.frame(variable=c("Furnished","Semi-Furnished","Unfurnished"),value=pdata)
+# Bar Plot 
+ggplot(badata, aes(x=variable,y=value)) + ggtitle("Furnished vs Semi-Furnished vs Non-furnished for all the room")+ geom_bar(stat="identity",width=0.5,color="black",fill=c(rainbow(3))) + geom_text(aes(label=value))
+
+
+# Analysis 3.6 - Find the analysis of city room count which rent<=50000
+
+str(data$City)
+als3.6a =nrow(AllObv[(AllObv$City=="Kolkata"),])
+als3.6a
+
+als3.6b =nrow(AllObv[(AllObv$City=="Mumbai"),])
+als3.6b
+
+als3.6c =nrow(AllObv[(AllObv$City=="Bangalore"),])
+als3.6c
+
+als3.6d =nrow(AllObv[(AllObv$City=="Delhi"),])
+als3.6d
+
+als3.6e =nrow(AllObv[(AllObv$City=="Chennai"),])
+als3.6e
+
+als3.6f =nrow(AllObv[(AllObv$City=="Hyderabad"),])
+als3.6f
+
+
+# Bar Chart
+pdata =c(als3.6a,als3.6b,als3.6c,als3.6d,als3.6e,als3.6f)
+badata= data.frame(variable=c("Kolkata","Mumbai","Bangalore","Delhi","Chennai","Hyderabad"),value=pdata)
+
+# Bar Plot
+ggplot(badata, aes(x=variable,y=value)) +ggtitle("Analysis of city room count which rent<=50000")+ labs(x="Types of City",y="Count")+geom_bar(stat="identity",width=0.5,color="blue",fill=c(rainbow(6))) + geom_text(aes(label=value))
+
+
+# Analysis 3.7 -  Find the analysis of BHK count which rent<=50000
+ABHK_data=AllObv%>%
+  group_by(BHK)%>%
+  summarize(Count=length(BHK))
+ABHK_data
+# Barplot
+barplot=ggplot(ABHK_data, aes(x=BHK,y=Count)) + geom_bar(stat="identity",width=0.5,color="black",fill=c(rainbow(6))) + geom_text(aes(label=Count))
+print(barplot+ggtitle("BHK Count"))
+
+
+# Analysis 3.8 -  Find the analysis of Bathroom count which rent<=50000
+ABath_data=AllObv%>%
+  group_by(Bathroom)%>%
+  summarize(Count=length(Bathroom))
+ABath_data
+# Barplot
+barplot=ggplot(ABath_data, aes(x=Bathroom,y=Count)) + geom_bar(stat="identity",width=0.5,color="blue",fill=c(rainbow(7))) + geom_text(aes(label=Count))
+print(barplot+ggtitle("Bathroom Count"))
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#Analysis 4 - Analysis of furnishing status.What affects the preferred furnishing status and why?
+# Analysis 4.1 -  Find the relationship between furnishing status and area type with rent<=50000
+als4.1 = AllObv
+PieDonut(als4.1,aes(Area.Type,Furnishing.Status),
+         title="Area Type & Furnishing Status with rent<=50000",
+         explode=2,
+         explodeDonut=TRUE
+)
+
+# Analysis 4.2 -  Find the relationship between furnishing status and Tenant.Preferred with rent<=50000
+als4.2= AllObv
+PieDonut(als4.2,aes(Tenant.Preferred,Furnishing.Status),
+         title="Tenant Preffered & Furnishing Status with rent<=50000",
+)
+
+# Analysis 4.3 -  Find the relationship between furnishing status and Point.of.Contact with rent<=50000
+als4.3 = AllObv
+PieDonut(PD,aes(Point.of.Contact,Furnishing.Status),
+         title="Point Of Contact & Furnishing Status with rent<=50000",
+)
+
+# Analysis 4.4 -  Find the relationship between furnishing status and rent range with rent<=50000
+als4.4 = AllObv
+PieDonut(PD,aes(Rent_Range,Furnishing.Status),
+         title="Rent Range & Furnishing Status with rent<=50000",
+)
+
+# Analysis 4.5 -  Find the relationship between furnishing status and size range with rent<=50000
+als4.5 = AllObv
+PieDonut(PD,aes(Size_Range,Furnishing.Status),
+         title="Size Range & Furnishing Status with rent<=50000",
+)
+
+# Analysis 4.6 -  Find the relationship between furnishing status and BHK count with rent<=50000
+als4.6 = AllObv
+PieDonut(PD,aes(BHK,Furnishing.Status),
+         title="BHK & Furnishing Status with rent<=50000",
+)
+
+# Analysis 4.7 -  Find the relationship between furnishing status and Bathroom count with rent<=50000
+als4.7 = AllObv
+PieDonut(PD,aes(Bathroom,Furnishing.Status),
+         title="Bathroom & Furnishing Status with rent<=50000",
+)
+
+
+# Analysis 4.8 -  Find the relationship between furnishing status and City with rent<=50000
+als4.7 = AllObv
+PieDonut(PD,aes(City,Furnishing.Status),
+         title="City & Furnishing Status with rent<=50000",
+         explode=1.5
+)
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# Analysis 5 - Analysis of rent. What affects the rent?
+# Analysis 5.1 - Find the relationship between rent<=50000 and Area Type
+als5.1=AllObv
+boxplot=ggplot(als5.1,aes(x=Area.Type,y=Rent,color=Area.Type))+ggtitle("Analysis Between rent<=50000 and Area Type")+labs(x="Area Type",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+                     stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+                    
+
+# Analysis 5.2 - Find the relationship between rent<=50000 and Furnishing Status
+als5.2=AllObv
+boxplot=ggplot(als5.1,aes(x=Furnishing.Status,y=Rent,color=Furnishing.Status))+ggtitle("Analysis Between rent<=50000 and Furnishing Status")+labs(x="Furnishing Status",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+# Analysis 5.3 - Find the relationship between rent<=50000 and BHK
+scatterplot<-ggplot(AllObv, aes(x=BHK, y=Rent),) + geom_point(aes(shape= factor(BHK),colour=factor(BHK))) + geom_smooth(method = "lm") 
+print(scatterplot + ggtitle("Relationship Between Rent<=50000 and BHK"))
+
+# Analysis 5.4 - Find the relationship between rent<=50000 and Bathroom
+scatterplot4<-ggplot(AllObv, aes(x=Bathroom, y=Rent),) + geom_jitter(aes(shape= factor(Bathroom),colour=factor(Bathroom))) + geom_smooth(method = "lm")
+print(scatterplot4 + ggtitle("Relationship Between Rent<=50000 and Bathroom"))
+
+# Analysis 5.5 - Find the relationship between rent<=50000 and Point Of Contact
+als5.5=AllObv
+boxplot=ggplot(als5.5,aes(x=Point.of.Contact,y=Rent,color=Point.of.Contact))+ggtitle("Analysis Between rent<=50000 and Point Of Contact")+labs(x="Point Of Contact",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+
+# Analysis 5.6 - Find the relationship between rent<=50000 and City
+als5.6=AllObv
+boxplot=ggplot(als5.6,aes(x=City,y=Rent,color=City))+ggtitle("Analysis Between rent<=50000 and City")+labs(x="City",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+# Analysis 5.7 - Find the relationship between rent<=50000 and Tenant Preferred 
+als5.7=AllObv
+boxplot=ggplot(als5.7,aes(x=Tenant.Preferred,y=Rent,color=Tenant.Preferred))+ggtitle("Analysis Between rent<=50000 and Tenant Preferred")+labs(x="Tenant Preferred",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+# Analysis 5.8 - Find the relationship between rent<=50000 and Date Posted 
+als5.8=AllObv
+boxplot=ggplot(als5.6,aes(x=Months_Post,y=Rent,color=Months_Post))+ggtitle("Analysis Between rent<=50000 and Month Posted")+labs(x="Month Post",y="Rent")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# Analysis 6 - Analysis on city rent properties. 
+# 6.1  Find the relationship between city and point of contact
+als6.1= AllObv
+
+count1 = table(als6.1$Point.of.Contact, als6.1$City)
+barplot(count1, main="Analysis of city and point of Contact",
+        col=c("darkblue","red"),
+        legend = rownames(count1),
+        xlab="Point Of Contact Count",ylab="City Types",
+        beside=TRUE,args.legend=list(x="topright",inset = c(- 0.65, 0),cex=0.45))
+
+
+# 6.2 Find the relationship between No. of room in the city with no. of bedroom
+als6.2=AllObv
+
+count2=table(als6.2$City,als6.2$BHK)
+barplot(count2,main="Analysis of city and no. of Bedroom",xlab="No. of bedroom",ylab="City Count",
+        col=c(rainbow(6)),legend=rownames(count2),args.legend=list(x="topright",inset = c(- 0.15, 0),cex=0.75))
+
+# 6.3 Find the relationship between no.of room in city and tenant(bachelor and family)
+als6.3=AllObv
+
+count3=table(als6.3$City,als6.3$Tenant.Preferred)
+barplot(count3,main="Relationship between city and Tenant Preferred",xlab="City Count",ylab="Tenant Preferred",col=c(rainbow(6)),beside=TRUE,legend=rownames(count2),args.legend=list(x="topright",inset = c(- 0.15, 0),cex=0.75))
+
+
+# 6.4 Find the relationship between city and furnishing status
+
+als6.4=AllObv
+
+count4=table(als6.4$City,als6.4$Furnishing.Status)
+barplot(count4,main="Relationship between city and furnishing status",xlab="City Count",ylab="Furnishing Status",col=c(rainbow(6)),
+        legend=rownames(count4),horiz=TRUE,args.legend=list(x="bottomright",inset = c(- 0.1, 0),cex=0.5))
+
+
+# 6.5 Find the relationship between city with no. of bathroom
+als6.5=AllObv
+
+count5=table(als6.5$City,als6.5$Bathroom)
+barplot(count5,main="Relationship between city and no. of bathroom",xlab="No. of bathroom",ylab="City Count",
+        col=c(rainbow(6)),legend=rownames(count5),args.legend=list(x="topright",inset = c(- 0.15, 0),cex=0.75))
+
+# 6.6 Find the relationship between city with Months Post
+als6.6=AllObv
+
+count6=table(als6.6$City,als6.6$Months_Post)
+barplot(count6,main="Relationship between city and Month",xlab="Months",ylab="City Count",
+        col=c(rainbow(6)),legend=rownames(count6),args.legend=list(x="topleft",inset = c(0.1, 0),cex=0.5))
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# 7 -Analyze the size of preference details 
+# 7.1 Find the relationship between size and the bathroom count
+Size_scatterplot<-ggplot(AllObv, aes(x=Bathroom, y=Size),) + geom_jitter(aes(shape= factor(Bathroom),colour=factor(Bathroom))) + geom_smooth(method = "lm") 
+print(Size_scatterplot + ggtitle("Relationship Between Rent<=50000 and Bathroom"))
+
+
+# 7.2 Find the relationship between size and the bedroom count and rent<=50000
+Size_scatterplot<-ggplot(AllObv, aes(x=BHK, y=Size),) + geom_jitter(aes(shape= factor(BHK),colour=factor(BHK))) + geom_smooth(method = "lm") 
+print(Size_scatterplot + ggtitle("Relationship Between Rent<=50000 and BHK"))
+
+
+# 7.3 Find the relationship between size and and rent<=50000
+Size_scatterplot<-ggplot(AllObv, aes(x=Rent, y=Size),) + geom_jitter(aes(shape= factor(Size_Range),colour=factor(Size_Range))) + geom_smooth(method = "lm") 
+print(Size_scatterplot + ggtitle("Relationship Between Rent<=50000 and Size"))
+
+
+# 7.4 Find the relationship size and tenant 
+als7.4=AllObv
+boxplot=ggplot(als7.4,aes(x=Tenant.Preferred,y=Size,color=Tenant.Preferred))+ggtitle("Analysis Between Size and Tenant Preferred which rent<=50000")+labs(x="Tenant Preferred",y="Size")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+
+# 7.5 Find the relationship size and furnishing status 
+als7.5=AllObv
+boxplot=ggplot(als7.5,aes(x=Furnishing.Status,y=Size,color=Furnishing.Status))+ggtitle("Analysis Between Size and Furnishing Status which rent<=50000")+labs(x="Furnishing Status",y="Size")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+# 7.6 Find the relationship size and point of contact 
+als7.6=AllObv
+boxplot=ggplot(als7.6,aes(x=Point.of.Contact,y=Size,color=Point.of.Contact))+ggtitle("Analysis Between Size and Point Of Contact which rent<=50000")+labs(x="Point Of Contact",y="Size")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2,
+                     notch=TRUE)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+
+# 7.7 Find the relationship size and area type 
+als7.7=AllObv
+boxplot=ggplot(als7.7,aes(x=Area.Type,y=Size,color=Area.Type))+ggtitle("Analysis Between Size and Area Type which rent<=50000")+labs(x="Area Type",y="Size")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2,
+                     notch=TRUE,)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+
+# 7.8 Find the relationship size and Months_Post 
+als7.8=AllObv
+boxplot=ggplot(als7.8,aes(x=Months_Post,y=Size,color=Months_Post))+ggtitle("Analysis Between Size and Months which rent<=50000")+labs(x="Months",y="Size")
+boxplot+geom_boxplot(outlier.shape = 1,
+                     outlier.size = 2,
+                     notch=TRUE,)+theme_classic()+
+  stat_summary(fun.y = mean,geom = "point", size = 3,color = "blue")
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
